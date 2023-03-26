@@ -1,0 +1,55 @@
+---
+- name: Install node and npm
+  hosts: 170.64.158.11
+
+  tasks:
+  - name: Update apt repo and cache
+    apt: 
+      update_cache: yes 
+      force_apt_get: yes 
+      cache_valid_time: 3600
+  # - name: Run apt-get update
+  #   command: sudo apt-get update
+  - name: Install nodejs and npm
+    apt:
+      pkg:
+        - nodejs
+        - npm
+
+- name: Create new linux user for node app
+  hosts: 170.64.158.11
+  vars_files:
+  - project-vars
+  tasks:
+  - name: Create linux user
+    user:
+      name: "{{linux_name}}"
+      comment: Korn Admin
+      group: admin
+
+- name: Deploy nodejs app
+  hosts: 170.64.158.11
+  become: True
+  become_user: "{{linux_name}}"
+  vars_files:
+  - project-vars
+  tasks:
+  - name: Unpack the nodejs file
+    unarchive:
+      src: "{{location}}-{{version}}.tgz"
+      dest: "{{destination}}"
+  - name: Install dependencies
+    npm:
+      path: "{{destination}}/package"
+  - name: Start the application
+    command: 
+      chdir: "{{destination}}/package/app"
+      cmd: node server
+    async: 1000
+    poll: 0
+  - name: Ensure app is running
+    shell: ps aux | grep node
+    register: app_status
+  - debug:
+      msg:
+      - "{{app_status.stdout_lines}}"

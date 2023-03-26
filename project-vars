@@ -1,0 +1,4 @@
+version: 1.0.0
+location: /Users/nikkitang/Desktop/Devops/simple-nodejs/nodejs-app
+linux_name: korn
+destination: /home/{{linux_name}}
